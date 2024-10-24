@@ -2,7 +2,7 @@ Repo demonstrating ExperimentalPrivilegedNesting showing cache misses
 
 To replicate this:
 
-- checkout https://github.com/DMajrekar/dagger-cache-monorepo/tree/broken-cache
+- checkout https://github.com/DMajrekar/dagger-cache-monorepo
 - Run the pipeline dagger -m ci call run-test
 - Note that the run takes 20 seconds
 - Run the pipeline again dagger -m ci call run-test
