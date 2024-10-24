@@ -10,87 +10,62 @@ import (
 )
 
 func RunGoTest(ctx context.Context, client *dagger.Client, projectBaseDir string, neoRootDir *dagger.Directory) (*dagger.Container, error) {
+	// Fetch the project directory
 	projectDir := neoRootDir.Directory(projectBaseDir)
-	testContainer, err := baseGoContainer(ctx, client, projectBaseDir, neoRootDir, projectDir)
-	if err != nil {
-		return nil, err
-	}
 
-	testContainer = testContainer.
-		WithExec([]string{"/bin/sh", "-c", "go run main.go"},
-			dagger.ContainerWithExecOpts{
-				InsecureRootCapabilities:      true,
-				ExperimentalPrivilegedNesting: true,
-			})
-	_, err = testContainer.Stdout(ctx)
-	// Ensure that the tests have been run
-	return testContainer, err
-}
-
-func baseGoContainer(ctx context.Context, client *dagger.Client, projectPath string, neoRootDir, projectDir *dagger.Directory) (*dagger.Container, error) {
 	// fetch go mod file
 	goModFile, err := projectDir.File("go.mod").Contents(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	// base go container of the correct version
-	baseContainerVersion, err := GoContainerFromGoMod(goModFile)
-	if err != nil {
-		return nil, err
-	}
-
-	baseContainer := client.Container().From(baseContainerVersion)
-
-	cacheVolume := client.CacheVolume(projectPath)
-
-	testContainer, err := replaceNeoGoModules(goModFile, baseContainer, neoRootDir)
-	if err != nil {
-		return nil, err
-	}
-	goContainer := goContainerOpts(client, testContainer, cacheVolume, projectPath, projectDir)
-
-	return goContainer, err
-}
-
-func goContainerOpts(client *dagger.Client, baseContainer *dagger.Container, cacheVolume *dagger.CacheVolume, projectPath string, projectDir *dagger.Directory) *dagger.Container {
-	return baseContainer.
-		WithMountedCache("/go/pkg/mod", cacheVolume, dagger.ContainerWithMountedCacheOpts{Sharing: dagger.Shared}).
-		WithMountedCache("/root/.cache/go-build", client.CacheVolume("go-build-cache")).
-		WithEnvVariable("GOPRIVATE", "git/*").
-		WithDirectory("/go/src/github.com/dmajrekar/dagger-cache-monorepo/"+projectPath, projectDir).
-		WithWorkdir("/go/src/github.com/dmajrekar/dagger-cache-monorepo/" + projectPath)
-
-}
-
-func GoContainerFromGoMod(goModFile string) (string, error) {
+	// Parse the go.mod file
 	mod, err := modfile.Parse("", []byte(goModFile), nil)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return fmt.Sprintf("golang:%s", mod.Go.Version), nil
-}
+	// Set the base container version from the go version in the go.mod file
+	baseContainerVersion := fmt.Sprintf("golang:%s", mod.Go.Version)
+	baseContainer := client.Container().From(baseContainerVersion)
 
-func replaceNeoGoModules(gomod string, baseContainer *dagger.Container, neoRootDir *dagger.Directory) (*dagger.Container, error) {
-	replacedDeps, err := ReplacedDepsFromGoMod(gomod)
+	// Fetch a list of all replaced dependencies in the go.mod file
+	replacedDeps, err := replacedDepsFromGoMod(goModFile)
 	if err != nil {
 		return nil, err
 	}
 
-	// Add any replaced dependencies
+	// For each replaced dependency, add the directory to the container
 	for _, dep := range replacedDeps {
 		// replace ../ from dep
 		dep = strings.Replace(dep, "../", "", 1)
 		baseContainer = baseContainer.WithDirectory("/go/src/github.com/dmajrekar/dagger-cache-monorepo/"+dep, neoRootDir.Directory(dep))
 	}
 
-	return baseContainer, nil
+	// create a dedicated cache volume for the project
+	cacheVolume := client.CacheVolume(projectBaseDir)
+
+	// Add the project directory to the container, with caches/ env vars
+	baseContainer = baseContainer.
+		WithMountedCache("/go/pkg/mod", cacheVolume, dagger.ContainerWithMountedCacheOpts{Sharing: dagger.Shared}).
+		WithMountedCache("/root/.cache/go-build", client.CacheVolume("go-build-cache")).
+		WithEnvVariable("GOPRIVATE", "git/*").
+		WithDirectory("/go/src/github.com/dmajrekar/dagger-cache-monorepo/"+projectBaseDir, projectDir).
+		WithWorkdir("/go/src/github.com/dmajrekar/dagger-cache-monorepo/" + projectBaseDir)
+
+	// Run the main.go
+	return baseContainer.
+		WithExec([]string{"/bin/sh", "-c", "go run main.go"},
+			dagger.ContainerWithExecOpts{
+				InsecureRootCapabilities:      true,
+				ExperimentalPrivilegedNesting: true,
+			}).
+		Sync(ctx)
 }
 
-// ReplacedDepsFromGoMod takes a go.mod file and returns the list of
+// replacedDepsFromGoMod takes a go.mod file and returns the list of
 // replaced dependencies
-func ReplacedDepsFromGoMod(goModFile string) ([]string, error) {
+func replacedDepsFromGoMod(goModFile string) ([]string, error) {
 	mod, err := modfile.Parse("", []byte(goModFile), nil)
 	if err != nil {
 		return nil, err
