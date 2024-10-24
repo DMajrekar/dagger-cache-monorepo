@@ -9,7 +9,7 @@ import (
 	"golang.org/x/mod/modfile"
 )
 
-func Run(ctx context.Context, dag *dagger.Client, dir string, rootDir *dagger.Directory) (string, error) {
+func Run(ctx context.Context, dag *dagger.Client, dir string, rootDir *dagger.Directory, enableExperimentalPrivilegedNesting bool) (string, error) {
 	cacheVolume := dag.CacheVolume("go-mod-cache-" + dir)
 	cacheBuild := dag.CacheVolume("go-build-cache-" + dir)
 
@@ -52,7 +52,7 @@ func Run(ctx context.Context, dag *dagger.Client, dir string, rootDir *dagger.Di
 		WithExec([]string{"/bin/sh", "-c", "go run main.go"},
 			dagger.ContainerWithExecOpts{
 				InsecureRootCapabilities:      true,
-				ExperimentalPrivilegedNesting: false,
+				ExperimentalPrivilegedNesting: enableExperimentalPrivilegedNesting,
 			},
 		).
 		Stdout(ctx)

@@ -14,6 +14,8 @@ func (Ci) RunTest(ctx context.Context,
 	// +defaultPath="/"
 	// +ignore=["*", "!project*", "!lib*" ]
 	rootDir *dagger.Directory,
+	// +default=false
+	enableExperimentalPrivilegedNesting bool,
 ) (string, error) {
 	dirs, err := filterDirs(ctx, rootDir)
 	if err != nil {
@@ -23,7 +25,7 @@ func (Ci) RunTest(ctx context.Context,
 	for _, dir := range dirs {
 		fmt.Printf("Running test for %s\n", dir)
 
-		out, err := util.Run(ctx, dag, dir, rootDir)
+		out, err := util.Run(ctx, dag, dir, rootDir, enableExperimentalPrivilegedNesting)
 		if err != nil {
 			return "", err
 		}
