@@ -49,7 +49,12 @@ func Run(ctx context.Context, dag *dagger.Client, dir string, rootDir *dagger.Di
 		WithWorkdir("/go/src/github.com/dmajrekar/dagger-cache-monorepo/" + dir)
 
 	return baseContainer.
-		WithExec([]string{"/bin/sh", "-c", "go run main.go"}).
+		WithExec([]string{"/bin/sh", "-c", "go run main.go"},
+			dagger.ContainerWithExecOpts{
+				InsecureRootCapabilities:      true,
+				ExperimentalPrivilegedNesting: false,
+			},
+		).
 		Stdout(ctx)
 }
 
