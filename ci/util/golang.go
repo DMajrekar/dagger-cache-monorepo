@@ -41,13 +41,15 @@ func Run(ctx context.Context, dag *dagger.Client, dir string, rootDir *dagger.Di
 		baseContainer = baseContainer.WithDirectory("/go/src/github.com/dmajrekar/dagger-cache-monorepo/"+mountPath, rootDir.Directory(mountPath))
 	}
 
-	return baseContainer.
+	baseContainer = baseContainer.
 		WithMountedCache("/go/pkg/mod", cacheVolume, dagger.ContainerWithMountedCacheOpts{Sharing: dagger.Shared}).
 		WithMountedCache("/root/.cache/go-build", cacheBuild).
 		WithEnvVariable("GOPRIVATE", "git/*").
 		WithDirectory("/go/src/github.com/dmajrekar/dagger-cache-monorepo/"+dir, rootDir.Directory(dir)).
-		WithWorkdir("/go/src/github.com/dmajrekar/dagger-cache-monorepo/" + dir).
-		WithExec([]string{"go", "run", "main.go"}).
+		WithWorkdir("/go/src/github.com/dmajrekar/dagger-cache-monorepo/" + dir)
+
+	return baseContainer.
+		WithExec([]string{"/bin/sh", "-c", "go run main.go"}).
 		Stdout(ctx)
 }
 
