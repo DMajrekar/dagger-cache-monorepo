@@ -1,3 +1,27 @@
+    ✔ Directory.directory(path: "services/oidc"): Directory! = xxh3:79157cc9709bcecc 0.0s
+  ✔ Directory@xxh3:038c7c0c112324c3.file(path: "go.mod"): File! = xxh3:d0cba957307ead48 0.0s
+  ✔ File@xxh3:79157cc9709bcecc.contents: String! = xxh3:affebf8b387cc549 0.0s
+  ✔ cacheVolume(key: "services/oidc"): CacheVolume! = xxh3:402e90a4987994ea 0.0s
+  ✔ Directory.directory(path: "clients/loukas/v1/loukas-go"): Directory! = xxh3:9332f0153ff9b90c 0.0s
+  ✔ Directory.directory(path: "clients/oidc/v2/oidc-go"): Directory! = xxh3:c298be4eb7d796b0 0.0s
+  ✔ Directory.directory(path: "lib/transport/"): Directory! = xxh3:4bc2dc84e8ec9f92 0.0s
+  ✔ Directory.directory(path: "lib/database/"): Directory! = xxh3:306929093d0afc5f 0.0s
+  ✔ Directory.directory(path: "lib/redis"): Directory! = xxh3:5479b2193720088e 0.0s
+  ✔ cacheVolume(key: "go-build-cache-services/oidc"): CacheVolume! = xxh3:25f6e225bef16b2c 0.0s
+  ✔ Directory.directory(path: "lib/instrumentation/"): Directory! = xxh3:aab975df517d8a29 0.0s
+  ✔ Directory.directory(path: "lib/ci"): Directory! = xxh3:eb857497b4799a43 0.0s
+  ✔ Directory.directory(path: "lib/db"): Directory! = xxh3:2262feec381368ba 0.0s
+  ✔ container: Container! = xxh3:6934f6e558023746 0.0s
+  ✔ Container.from(address: "golang:1.23.2"): Container! = xxh3:9aa3385deb8a5753 0.4s
+    ✔ resolving docker.io/library/golang:1.23.2 0.4s
+      ✔ remotes.docker.resolver.HTTPRequest 0.3s
+        ✔ HTTP HEAD 0.3s
+    ✔ cache request: pull docker.io/library/golang:1.23.2 0.0s
+  ✔ Container@xxh3:6934f6e558023746.withMountedCache(
+      cache: ✔ cacheVolume(key: "services/oidc"): CacheVolume! = xxh3:402e90a4987994ea 0.0s
+      path: "/go/pkg/mod"
+      sharing: SHARED
+    ): Container! = xxh3:981e4e4b2b39ce44 0.0s
   ✔ Container@xxh3:9aa3385deb8a5753.withMountedCache(
       cache: ✔ cacheVolume(key: "go-build-cache-services/oidc"): CacheVolume! = xxh3:25f6e225bef16b2c 0.0s
       path: "/root/.cache/go-build"
