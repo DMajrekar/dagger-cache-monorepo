@@ -1,5 +1,10 @@
 # Cache Misses with ExperimentalPrivilegedNesting
 
+> Thank you @sipsma for your help and resolution of this in the PR: https://github.com/dagger/dagger/pull/8776
+>
+> Readme / repo left for posterity. This now only shows an issue with dagger < 0.13.6
+
+
 This repo demonstrates a cache miss issue when using the `ExperimentalPrivilegedNesting` feature in Dagger.
 
 There are two sample mono-repo type services within the `project1` and `project2` directories. Each project loads a shared library from the `lib` dir, and runs a 10 second sleep when run. To simulate a more complex repo, the sleep command has been refactored into the `lib` dir.
